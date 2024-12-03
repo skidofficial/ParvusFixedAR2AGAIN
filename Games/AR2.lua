@@ -1201,51 +1201,59 @@ OldNamecall = hookmetamethod(game, "__namecall", function(Self, ...)
     return OldNamecall(Self, ...)
 end)
 
-local OldSend; OldSend = hookfunction(Network.Send, newcclosure(function(Self, Name, ...)
-    if table.find(SanityBans, Name) then print("bypassed", Name) return end
-    if Name == "Character Jumped" and Window.Flags["AR2/SSCS"] then return end
-
-    if Name == "Vehicle Bumper Impact" then
-        if Window.Flags["AR2/Vehicle/Impact"] then
-            return
-        end
+-- Store the original Network.Send function
+local OldSend
+OldSend = hookfunction(Network.Send, newcclosure(function(Self, Name, ...)
+    -- Check if the event name is in the SanityBans list and bypass if true
+    if table.find(SanityBans, Name) then
+        print("bypassed", Name)
+        return
     end
 
-    if Name == "Inventory Container Group Disconnect" then
-        if Window.Flags["AR2/ContainerPersistence"] then
-            return
-        end
+    -- Check for specific event names and conditions to bypass or modify behavior
+    if Name == "Character Jumped" and Window.Flags["AR2/SSCS"] then
+        return
     end
 
-    --[[if Name == "Bullet Fired" then
-        if Window.Flags["AR2/NoSpread"] then
-            local Args = {...}
-            print(Args[5] == ProjectileDirection)
-            Args[5] = ProjectileSpread --* Vector3.new(-1, -1, 1)
-            return OldSend(Self, Name, unpack(Args))
-        end
+    if Name == "Vehicle Bumper Impact" and Window.Flags["AR2/Vehicle/Impact"] then
+        return
+    end
+
+    if Name == "Inventory Container Group Disconnect" and Window.Flags["AR2/ContainerPersistence"] then
+        return
+    end
+
+    --[[ Commented out code for "Bullet Fired" event
+    if Name == "Bullet Fired" and Window.Flags["AR2/NoSpread"] then
+        local Args = {...}
+        print(Args[5] == ProjectileDirection)
+        Args[5] = ProjectileSpread -- Adjust ProjectileSpread as needed
+        return OldSend(Self, Name, unpack(Args))
     end]]
 
-    --[[if Name == "Bullet Impact" then
-        print("bullet impact")
-        if Window.Flags["AR2/NoSpread"] then
-            local Args = {...}
-            local Position, Table = CastLocalBulletInstant(ProjectileOrigin, ProjectileDirection2, ProjectileSpread)
-            if not Position then print(Args[1], "miss") return OldSend(Self, Name, ...) end
-
-            --Args[5] = Target
-            print(Args[1], "hit")
-            Args[6] = Position
-            Args[7][1] = Table[1]
-            Args[7][2] = Table[2]
-            Args[7][3] = Table[3]
-
-            return OldSend(Self, Name, unpack(Args))
+    --[[ Commented out code for "Bullet Impact" event
+    if Name == "Bullet Impact" and Window.Flags["AR2/NoSpread"] then
+        local Args = {...}
+        local Position, Table = CastLocalBulletInstant(ProjectileOrigin, ProjectileDirection2, ProjectileSpread)
+        if not Position then
+            print(Args[1], "miss")
+            return OldSend(Self, Name, ...)
         end
+
+        -- Adjust Args based on the calculated Position and Table
+        print(Args[1], "hit")
+        Args[6] = Position
+        Args[7][1] = Table[1]
+        Args[7][2] = Table[2]
+        Args[7][3] = Table[3]
+
+        return OldSend(Self, Name, unpack(Args))
     end]]
 
+    -- Call the original Network.Send function with all arguments
     return OldSend(Self, Name, ...)
 end))
+
 
 local OldFetch; OldFetch = hookfunction(Network.Fetch, newcclosure(function(Self, Name, ...)
     if table.find(SanityBans, Name) then print("bypassed", Name) return end
